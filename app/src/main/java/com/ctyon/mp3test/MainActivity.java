@@ -5,8 +5,10 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.Parcelable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -14,6 +16,9 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -26,10 +31,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_main);
         initView();
         initData();
-        /*musics = FileManager.getInstance(this).getMusics();
-        for (MusicBean music : musics) {
-            Log.e(TAG,music.toString());
-        }*/
+
     }
 
     private void initView() {
@@ -42,17 +44,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void initData() {
-        Intent MediaServiceIntent = new Intent(this, MediaService.class);
+        List<MusicBean> musics = FileManager.getInstance(this).getMusics();
+        for (MusicBean music : musics) {
+            //Log.e(TAG,music.getPath());
+        }
+        Intent mediaServiceIntent = new Intent(this, MediaService.class);
+        //mediaServiceIntent.putExtra("MUSICS", (Parcelable) musics);
+        Bundle bundle = new Bundle();
+        bundle.putParcelableArrayList("MUSICS", (ArrayList<? extends Parcelable>) musics);
+        mediaServiceIntent.putExtras(bundle);
+        startService(mediaServiceIntent);
 
 
         //判断权限够不够，不够就给
-        if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(MainActivity.this, new String[]{
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE
-            }, 1);
-        } else {
+        if (Build.VERSION.SDK_INT>22){
+            if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(MainActivity.this, new String[]{
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE
+                }, 1);
+            }
+        }else {
             //够了就设置路径等，准备播放
-            bindService(MediaServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
+            bindService(mediaServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
         }
 
     }
@@ -61,9 +74,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             mMyBinder = (MediaService.MyBinder) service;
-            //            mMediaService = ((MediaService.MyBinder) service).getInstance();
-
-            Log.d(TAG, "Service与Activity已连接");
+            Log.e(TAG, "Service与Activity已连接");
         }
 
         @Override

@@ -1,10 +1,13 @@
 package com.ctyon.mp3test;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 /**
  * Created by zx
  * On 2018/5/19
  */
-public class MusicBean {
+public class MusicBean implements Parcelable{
     /**歌曲名*/
     private String name;
     /**路径*/
@@ -17,6 +20,27 @@ public class MusicBean {
     private long size;
     /**时长*/
     private int duration;
+
+    protected MusicBean(Parcel in) {
+        name = in.readString();
+        path = in.readString();
+        album = in.readString();
+        artist = in.readString();
+        size = in.readLong();
+        duration = in.readInt();
+    }
+
+    public static final Creator<MusicBean> CREATOR = new Creator<MusicBean>() {
+        @Override
+        public MusicBean createFromParcel(Parcel in) {
+            return new MusicBean(in);
+        }
+
+        @Override
+        public MusicBean[] newArray(int size) {
+            return new MusicBean[size];
+        }
+    };
 
     public String getName() {
         return name;
@@ -85,5 +109,20 @@ public class MusicBean {
                 ", size=" + size +
                 ", duration=" + duration +
                 '}';
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel parcel, int i) {
+        parcel.writeString(name);
+        parcel.writeString(path);
+        parcel.writeString(album);
+        parcel.writeString(artist);
+        parcel.writeLong(size);
+        parcel.writeInt(duration);
     }
 }

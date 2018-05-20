@@ -4,12 +4,12 @@ import android.app.Service;
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.os.Binder;
-import android.os.Environment;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Created by zx
@@ -21,25 +21,32 @@ public class MediaService extends Service {
     private MyBinder mBinder = new MyBinder();
     //标记当前歌曲的序号
     private int i = 0;
-    //歌曲路径
-    private String[] musicPath = new String[]{
-            Environment.getExternalStorageDirectory() + "/Sounds/a1.mp3",
-            Environment.getExternalStorageDirectory() + "/Sounds/a2.mp3",
-            Environment.getExternalStorageDirectory() + "/Sounds/a3.mp3",
-            Environment.getExternalStorageDirectory() + "/Sounds/a4.mp3"
-    };
     //初始化MediaPlayer
     public MediaPlayer mMediaPlayer = new MediaPlayer();
+    private List<MusicBean> musics;
 
-
-    public MediaService() {
-        iniMediaPlayerFile(i);
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        Log.e(TAG,"onCreate");
     }
 
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.e(TAG,"onStartCommand");
+        musics = intent.getParcelableArrayListExtra("MUSICS");
+        for (MusicBean music : musics) {
+            Log.e(TAG,music.getPath());
+        }
+        iniMediaPlayerFile(i);
+        return super.onStartCommand(intent, flags, startId);
+
+    }
 
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
+
         return mBinder;
     }
 
@@ -97,23 +104,23 @@ public class MediaService extends Service {
          * 下一首
          */
         public void nextMusic() {
-            if (mMediaPlayer != null && i < 4 && i >= 0) {
-                //切换歌曲reset()很重要很重要很重要，没有会报IllegalStateException
-                mMediaPlayer.reset();
-                iniMediaPlayerFile(i + 1);
-                //这里的if只要是为了不让歌曲的序号越界，因为只有4首歌
-                if (i == 2) {
-
-                } else {
-                    i = i + 1;
+            if (mMediaPlayer != null){
+                if ( i < musics.size()-1) {
+                    //切换歌曲reset()很重要很重要很重要，没有会报IllegalStateException
+                    mMediaPlayer.reset();
+                    i = i+1;
+                    iniMediaPlayerFile(i);
+                    playMusic();
+                }else {
+                    i = 0;
                 }
-                playMusic();
+
             }
         }
 
         /**
          * 上一首
-         */
+         *//*
         public void preciousMusic() {
             if (mMediaPlayer != null && i < 4 && i > 0) {
                 mMediaPlayer.reset();
@@ -126,7 +133,7 @@ public class MediaService extends Service {
                 }
                 playMusic();
             }
-        }
+        }*/
 
         /**
          * 获取歌曲长度
@@ -150,9 +157,6 @@ public class MediaService extends Service {
             mMediaPlayer.seekTo(msec);
         }
 
-
-
-
     }
 
 
@@ -164,7 +168,7 @@ public class MediaService extends Service {
         try {
             //此处的两个方法需要捕获IO异常
             //设置音频文件到MediaPlayer对象中
-            mMediaPlayer.setDataSource(musicPath[dex]);
+            mMediaPlayer.setDataSource(musics.get(dex).getPath());
             //让MediaPlayer对象准备
             mMediaPlayer.prepare();
         } catch (IOException e) {
