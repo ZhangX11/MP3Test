@@ -24,6 +24,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private static final String TAG = "MainActivity";
     private MediaService.MyBinder mMyBinder;
+    private List<MusicBean> musics;
+    private Intent mediaServiceIntent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,11 +53,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void initData() {
-        List<MusicBean> musics = FileManager.getInstance(this).getMusics();
+        musics = FileManager.getInstance(this).getMusics();
         for (MusicBean music : musics) {
             //Log.e(TAG,music.getPath());
         }
-        Intent mediaServiceIntent = new Intent(this, MediaService.class);
+        mediaServiceIntent = new Intent(this, MediaService.class);
         //mediaServiceIntent.putExtra("MUSICS", (Parcelable) musics);
         Bundle bundle = new Bundle();
         bundle.putParcelableArrayList("MUSICS", (ArrayList<? extends Parcelable>) musics);
@@ -81,16 +83,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onClick(View v) {
-        switch (v.getId()){
-            case R.id.btn_play:
-                mMyBinder.playMusic();
-                break;
-            case R.id.btn_pause:
-                mMyBinder.pauseMusic();
-                break;
-            case R.id.btn_next:
-                mMyBinder.nextMusic();
-                break;
+        if (musics.size() == 0){
+            Toast.makeText(this,"没有歌曲",Toast.LENGTH_SHORT).show();
+        }else {
+            switch (v.getId()){
+                case R.id.btn_play:
+                    mMyBinder.playMusic();
+                    break;
+                case R.id.btn_pause:
+                    mMyBinder.pauseMusic();
+                    break;
+                case R.id.btn_next:
+                    mMyBinder.nextMusic();
+                    break;
+            }
         }
     }
 
@@ -98,6 +104,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onDestroy() {
         super.onDestroy();
         mMyBinder.closeMedia();
+        stopService(mediaServiceIntent);
         unbindService(mServiceConnection);
     }
 
@@ -109,8 +116,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             exitTime = System.currentTimeMillis();
         } else {
             finish();
-            System.exit(0);
-            android.os.Process.killProcess(android.os.Process.myPid());
+//            System.exit(0);
+//            android.os.Process.killProcess(android.os.Process.myPid());
         }
     }
 }
