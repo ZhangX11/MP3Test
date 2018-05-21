@@ -30,6 +30,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         initView();
+        if (Build.VERSION.SDK_INT>22){
+            if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(MainActivity.this, new String[]{
+                        Manifest.permission.READ_EXTERNAL_STORAGE
+                }, 1);
+            }
+        }
         initData();
 
     }
@@ -54,19 +61,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         bundle.putParcelableArrayList("MUSICS", (ArrayList<? extends Parcelable>) musics);
         mediaServiceIntent.putExtras(bundle);
         startService(mediaServiceIntent);
-
-
-        //判断权限够不够，不够就给
-        if (Build.VERSION.SDK_INT>22){
-            if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(MainActivity.this, new String[]{
-                        Manifest.permission.WRITE_EXTERNAL_STORAGE
-                }, 1);
-            }
-        }else {
-            //够了就设置路径等，准备播放
-            bindService(mediaServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
-        }
+        //够了就设置路径等，准备播放
+        bindService(mediaServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
 
     }
 

@@ -7,6 +7,7 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
+import android.widget.Toast;
 
 import java.io.IOException;
 import java.util.List;
@@ -15,7 +16,7 @@ import java.util.List;
  * Created by zx
  * On 2018/5/19
  */
-public class MediaService extends Service {
+public class MediaService extends Service implements MediaPlayer.OnCompletionListener {
 
     private static final String TAG = "MediaService";
     private MyBinder mBinder = new MyBinder();
@@ -28,6 +29,7 @@ public class MediaService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        mMediaPlayer.setOnCompletionListener(this);
         Log.e(TAG,"onCreate");
     }
 
@@ -38,7 +40,13 @@ public class MediaService extends Service {
         for (MusicBean music : musics) {
             Log.e(TAG,music.getPath());
         }
-        iniMediaPlayerFile(i);
+        if(musics.size()>0){
+            Toast.makeText(this,"找到"+musics.size()+"首歌曲",Toast.LENGTH_SHORT).show();
+            iniMediaPlayerFile(i);
+        }else {
+            Toast.makeText(this,"没找到歌曲",Toast.LENGTH_SHORT).show();
+            Log.e(TAG,"****musics.size()=0*****");
+        }
         return super.onStartCommand(intent, flags, startId);
 
     }
@@ -48,6 +56,11 @@ public class MediaService extends Service {
     public IBinder onBind(Intent intent) {
 
         return mBinder;
+    }
+
+    @Override
+    public void onCompletion(MediaPlayer mp) {
+        mBinder.nextMusic();
     }
 
     public class MyBinder extends Binder {
@@ -105,15 +118,16 @@ public class MediaService extends Service {
          */
         public void nextMusic() {
             if (mMediaPlayer != null){
-                if ( i < musics.size()-1) {
+                if ( i == musics.size()-1) {
                     //切换歌曲reset()很重要很重要很重要，没有会报IllegalStateException
-                    mMediaPlayer.reset();
-                    i = i+1;
-                    iniMediaPlayerFile(i);
-                    playMusic();
-                }else {
                     i = 0;
+                }else {
+                    i = i+1;
                 }
+
+                mMediaPlayer.reset();
+                iniMediaPlayerFile(i);
+                playMusic();
 
             }
         }
